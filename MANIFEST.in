@@ -1,5 +1,4 @@
 include LICENSE
 include README.md
-recursive-include fatleaders *.py
-recursive-include fatleaders *.ttf
-recursive-include fatleaders *.jpg
+recursive-include fatpayback *.py
+recursive-include fatpayback *.html

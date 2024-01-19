@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "allianceauth-fat-paybacks"
+dynamic = ["version"]
+description = "aFAT Mod for shenanigans"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "AaronKable", email = "aaronkable@gmail.com" },
+]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+[tool.hatch.version]
+path = "fatpaybacks/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/fatpaybacks",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["fatpaybacks"]
