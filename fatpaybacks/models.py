@@ -69,8 +69,8 @@ class FatPaybackSetup(models.Model):
         if self.value_from_moon_mining:
             moon_income = InvoiceRecord.objects.filter(
                 end_date__gte=timezone.now()-timedelta(days=self.time_to_look_back)
-            ).aggregate(total_mined_value=Sum("total_mined"))
-            total_share += float(moon_income['total_mined_value']
+            ).aggregate(total_taxed_value=Sum("total_taxed"))
+            total_share += float(moon_income['total_taxed_value']
                                  ) * self.percentage_of_moon_mininig
         return total_share
 
