@@ -44,7 +44,7 @@ class FatPaybackSetup(models.Model):
         ).values(
             # Group by main character
             "character__character_ownership__user__profile__main_character__character_id",
-        ).annotate(
+        ).distinct().annotate(
             # Count fats per main
             fats=Count("id"),
             # corp id for simplicity
@@ -59,7 +59,7 @@ class FatPaybackSetup(models.Model):
         char_data = self.get_character_fleet_data()
         return char_data.values(
             "corp"
-        ).annotate(
+        ).distinct().annotate(
             actives=Count(
                 "character__character_ownership__user__profile__main_character__character_id")
         )
