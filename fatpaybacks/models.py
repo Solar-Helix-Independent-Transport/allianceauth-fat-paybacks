@@ -53,7 +53,7 @@ class FatPaybackSetup(models.Model):
         ).filter(
             # Only those that match the threshold
             fats__gte=self.active_threshold
-        ).distinct()
+        )
 
     def get_active_counts_per_corp(self):
         char_data = self.get_character_fleet_data()
@@ -61,8 +61,8 @@ class FatPaybackSetup(models.Model):
             "corp"
         ).annotate(
             actives=Count(
-                "character__character_ownership__user__profile__main_character__character_id")
-        ).distinct()
+                "character__character_ownership__user__profile__main_character__character_id", distinct=True)
+        )
 
     def get_income_total(self):
         total_share = 0
