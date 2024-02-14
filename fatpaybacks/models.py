@@ -31,13 +31,13 @@ class FatPaybackSetup(models.Model):
     value_from_moon_mining = models.BooleanField(default=True)
     percentage_of_moon_mininig = models.FloatField(default=0.1)
 
-    def get_character_fleet_data(self):
-        start_date = timezone.now() - timedelta(days=30)
+    def get_character_fleet_data(self, start_date, end_date):
         return Fat.objects.filter(
             # Only the selected types
             fatlink__link_type__in=self.types_in_active.all(),
             # within the time period
             fatlink__created__gte=start_date,
+            fatlink__created__lte=end_date,
             # only mains in alliances chosen
             character__character_ownership__user__profile__main_character__alliance_id__in=self.alliances.all(
             ).values_list("alliance_id", flat=True)
@@ -55,8 +55,11 @@ class FatPaybackSetup(models.Model):
             fats__gte=self.active_threshold
         )
 
-    def get_active_counts_per_corp(self):
-        char_data = self.get_character_fleet_data()
+    def get_active_counts_per_corp(self, start_date, end_date):
+        char_data = self.get_character_fleet_data(
+            start_date,
+            end_date
+        )
         return char_data.values(
             "corp"
         ).annotate(
@@ -64,19 +67,26 @@ class FatPaybackSetup(models.Model):
                 "character__character_ownership__user__profile__main_character__character_id", distinct=True)
         )
 
-    def get_income_total(self):
+    def get_income_total(self, start_date, end_date):
         total_share = 0
         if self.value_from_moon_mining:
             moon_income = InvoiceRecord.objects.filter(
-                end_date__gte=timezone.now()-timedelta(days=self.time_to_look_back)
+                end_date__gte=start_date,
+                end_date__lte=end_date
             ).aggregate(total_taxed_value=Sum("total_taxed"))
             total_share += float(moon_income['total_taxed_value']
                                  ) * self.percentage_of_moon_mininig
         return total_share
 
-    def get_payment_per_corp(self):
-        corp_data = self.get_active_counts_per_corp()
-        total_share = self.get_income_total()
+    def get_payment_per_corp(self, start_date, end_date):
+        corp_data = self.get_active_counts_per_corp(
+            start_date,
+            end_date
+        )
+        total_share = self.get_income_total(
+            start_date,
+            end_date
+        )
 
         total_active_chars = corp_data.aggregate(total_active_chars=Sum("actives"))[
             'total_active_chars']
@@ -86,8 +96,11 @@ class FatPaybackSetup(models.Model):
             c['credit'] = single_share * c['actives']
         return corp_data, total_active_chars, single_share
 
-    def credit_corps(self):
-        payment_details, total_active_chars, single_share = self.get_payment_per_corp()
+    def process_corps(self, start_date, end_date):
+        payment_details, total_active_chars, single_share = self.get_payment_per_corp(
+            start_date,
+            end_date
+        )
 
         for c in payment_details:
             credits, _ = CorporateTaxCredits.objects.get_or_create(
@@ -104,6 +117,11 @@ class FatPaybackSetup(models.Model):
         )
 
         return payment_details
+
+    def credit_corps(self):
+        start_date = timezone.now() - timedelta(days=self.time_to_look_back)
+        end_date = timezone.now()
+        return self.process_corps(start_date, end_date)
 
 
 class FatPaybackRecord(models.Model):
